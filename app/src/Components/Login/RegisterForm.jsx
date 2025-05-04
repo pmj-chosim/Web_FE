@@ -6,7 +6,7 @@ import LoginInputField from "./LoginInputField";
 const RegisterForm = ({ onSuccess }) => {
   const { register } = useAuth();
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [id, setID] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [gender, setGender] = useState("");
@@ -20,7 +20,7 @@ const RegisterForm = ({ onSuccess }) => {
     e.preventDefault();
     setError("");
 
-    if (!name || !email || !password || !confirmPassword || !gender || !age || !height || !weight) {
+    if (!name || !id || !password || !confirmPassword || !gender || !age || !height || !weight) {
       setError("모든 필드를 입력해주세요.");
       return;
     }
@@ -30,15 +30,10 @@ const RegisterForm = ({ onSuccess }) => {
       return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError("유효한 이메일 주소를 입력해주세요.");
-      return;
-    }
 
     const result = await register(
       name,
-      email,
+      id,
       password,
       gender,
       parseInt(age),
@@ -49,7 +44,7 @@ const RegisterForm = ({ onSuccess }) => {
 
     if (result.success) {
       setName("");
-      setEmail("");
+      setID("");
       setPassword("");
       setConfirmPassword("");
       setGender("");
@@ -65,7 +60,6 @@ const RegisterForm = ({ onSuccess }) => {
 
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-lg">
-      <h2 className="text-2xl font-bold mb-6 text-center">회원가입</h2>
 
       {error && (
         <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
@@ -81,10 +75,10 @@ const RegisterForm = ({ onSuccess }) => {
           onChange={(e) => setName(e.target.value)}
         />
         <LoginInputField
-          label="이메일"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          label="아이디"
+          type="id"
+          value={id}
+          onChange={(e) => setID(e.target.value)}
         />
         <LoginInputField
           label="비밀번호"

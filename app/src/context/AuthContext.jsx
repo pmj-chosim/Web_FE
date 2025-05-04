@@ -4,6 +4,12 @@ import Cookies from "js-cookie";
 
 const AuthContext = createContext();
 
+//연결 확인
+console.log("Env Variables:", {
+  login: import.meta.env.VITE_LOGIN_API_URL,
+  register: import.meta.env.VITE_REGISTRATION_API_URL,
+});
+
 export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(!!Cookies.get("accessToken")); // 쿠키로 초기화
   const [user, setUser] = useState({ user_name: Cookies.get("user_name") || "" });
@@ -22,7 +28,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      const response = await axios.post("/api/login", {
+      const response = await axios.post(import.meta.env.VITE_LOGIN_API_URL, {
         user_id: email,
         user_pw: password,
       });
@@ -54,7 +60,8 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (name, email, password, gender, age, height, weight, comp) => {
     try {
-      const response = await axios.post("/api/register", {
+
+      const response = await axios.post(import.meta.env.VITE_REGISTRATION_API_URL, {
         user_id: email,
         user_pw: password,
         user_name: name,

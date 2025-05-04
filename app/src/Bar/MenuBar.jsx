@@ -32,7 +32,7 @@ const MenuBar = () => {
               <Link to="/login" className="hover:underline">Login</Link>
             </li>
             <li>
-              <Link to="/signup" className="hover:underline">Sign In</Link>
+              <Link to="/signin" className="hover:underline">Sign In</Link>
             </li>
           </>
         )}
