@@ -42,10 +42,6 @@ jobs:
             echo "오류: DOCKER_USERNAME에 유효하지 않은 문자가 포함되어 있습니다. 영숫자, 밑줄, 하이픈만 사용 가능합니다."
             exit 1
           fi
-          if [ "${{ secrets.DOCKER_USERNAME }}" != "parkminjin" ]; then
-            echo "오류: DOCKER_USERNAME은 'parkminjin'이어야 합니다. 현재 값: ${{ secrets.DOCKER_USERNAME }}"
-            exit 1
-          fi
 
       # Step 5: Docker 이미지 빌드 및 푸시
       - name: Docker 이미지 빌드 및 푸시
@@ -54,7 +50,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: parkminjin/react_image:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/react_image:latest
           build-args: |
             VITE_LOGIN_API_URL=${{ secrets.VITE_LOGIN_API_URL }}
             VITE_REGISTRATION_API_URL=${{ secrets.VITE_REGISTRATION_API_URL }}
@@ -67,7 +63,7 @@ jobs:
           echo "사용된 빌드 인자:"
           echo "VITE_LOGIN_API_URL=${{ secrets.VITE_LOGIN_API_URL }}"
           echo "VITE_REGISTRATION_API_URL=${{ secrets.VITE_REGISTRATION_API_URL }}"
-          echo "Docker 태그: parkminjin/react_image:latest"
+          echo "Docker 태그: ${{ secrets.DOCKER_USERNAME }}/react_image:latest"
 
       # Step 7: SSH 설정 확인
       - name: SSH 설정 확인
@@ -88,6 +84,10 @@ jobs:
             echo "오류: SSH_PASSWORD가 비어 있거나 설정되지 않았습니다."
             exit 1
           fi
+          if [ -z "${{ secrets.SSH_PORT }}" ]; then
+            echo "오류: SSH_PORT가 비어 있거나 설정되지 않았습니다. 기본값 22를 사용하려면 22로 설정하세요."
+            exit 1
+          fi
 
       # Step 8: 서버 배포
       - name: 서버 배포
@@ -101,7 +101,7 @@ jobs:
             docker stop react_image || true
             docker rm react_image || true
             # 최신 이미지 풀
-            docker pull parkminjin/react_image:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/react_image:latest
             # Docker 네트워크 확인 및 생성
             docker network create app-network || true
             # 새 컨테이너 실행
@@ -110,5 +110,5 @@ jobs:
               -p 300:3000 \
               -e VITE_LOGIN_API_URL=${{ secrets.VITE_LOGIN_API_URL }} \
               -e VITE_REGISTRATION_API_URL=${{ secrets.VITE_REGISTRATION_API_URL }} \
-              parkminjin/react_image:latest
+              ${{ secrets.DOCKER_USERNAME }}/react_image:latest
           '
