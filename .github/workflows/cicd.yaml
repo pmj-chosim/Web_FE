@@ -1,0 +1,97 @@
+name: React CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout 코드
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      # Step 2: Node.js 설정
+      - name: Node.js 설정
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Step 3: Docker Hub 로그인
+      - name: Docker Hub 로그인
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Step 4: DOCKER_USERNAME 디버깅
+      - name: DOCKER_USERNAME 확인
+        run: |
+          echo "DOCKER_USERNAME is set to: ${{ secrets.DOCKER_USERNAME }}"
+          if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then
+            echo "Error: DOCKER_USERNAME is empty or not edit set"
+            exit 1
+          fi
+
+      # Step 5: Docker 이미지 빌드 및 푸시
+      - name: Docker 이미지 빌드 및 푸시
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/react_app:latest
+          build-args: |
+            VITE_LOGIN_API_URL=${{ secrets.VITE_LOGIN_API_URL }}
+            VITE_REGISTRATION_API_URL=${{ secrets.VITE_REGISTRATION_API_URL }}
+
+      # Step 6: SSH 설정 확인
+      - name: SSH 설정 확인
+        run: |
+          echo "SSH_HOST is set to: ${{ secrets.SSH_HOST }}"
+          echo "SSH_USER is set to: ${{ secrets.SSH_USER }}"
+          echo "SSH_PORT is set to: ${{ secrets.SSH_PORT }}"
+          echo "SSH_PASSWORD is set: ${{ secrets.SSH_PASSWORD != '' }}"
+          if [ -z "${{ secrets.SSH_HOST }}" ]; then
+            echo "Error: SSH_HOST is empty or not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.SSH_USER }}" ]; then
+            echo "Error: SSH_USER is empty or not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.SSH_PASSWORD }}" ]; then
+            echo "Error: SSH_PASSWORD is empty or not set"
+            exit 1
+          fi
+
+      # Step 7: 서버 배포 (비밀번호 인증)
+      - name: 서버 배포
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sshpass
+          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} -p ${{ secrets.SSH_PORT }} '
+            # Docker Hub 로그인
+            docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+            # 기존 컨테이너 중지 및 제거
+            docker stop react_app || true
+            docker rm react_app || true
+            # 최신 이미지 풀
+            docker pull ${{ secrets.DOCKER_USERNAME }}/react_app:latest
+            # Docker 네트워크 확인 및 생성
+            docker network create app-network || true
+            # 새 컨테이너 실행
+            docker run -d --name react_app \
+              --network app-network \
+              -p 300:3000 \
+              -e VITE_LOGIN_API_URL=${{ secrets.VITE_LOGIN_API_URL }} \
+              -e VITE_REGISTRATION_API_URL=${{ secrets.VITE_REGISTRATION_API_URL }} \
+              ${{ secrets.DOCKER_USERNAME }}/react_app:latest
+          '
