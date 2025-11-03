@@ -12,7 +12,7 @@ createRoot(document.getElementById("root")).render(
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/home" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signin" element={<RegisterPage />} />
           <Route path="/mypage" element={<PersonalPage />} />
